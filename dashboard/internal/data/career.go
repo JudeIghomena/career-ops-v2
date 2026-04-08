@@ -1,6 +1,7 @@
 package data
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -497,8 +498,23 @@ func NormalizeStatus(raw string) string {
 	}
 }
 
-// LoadReportSummary extracts key fields from a report file.
+// LoadReportSummary extracts key fields from a report.
+// Strategy: prefer the JSON sidecar (structured, fast) — fall back to markdown regex (legacy).
 func LoadReportSummary(careerOpsPath, reportPath string) (archetype, tldr, remote, comp string) {
+	// ── Strategy 1: JSON sidecar ───────────────────────────────────────────────
+	jsonPath := strings.TrimSuffix(reportPath, ".md") + ".json"
+	if rj := loadReportJSON(careerOpsPath, jsonPath); rj != nil {
+		archetype = rj.Archetype
+		tldr = rj.TlDr
+		remote = rj.Remote
+		comp = rj.Comp
+		if len(tldr) > 120 {
+			tldr = tldr[:117] + "..."
+		}
+		return
+	}
+
+	// ── Strategy 2: Markdown regex (legacy reports without JSON sidecar) ───────
 	fullPath := filepath.Join(careerOpsPath, reportPath)
 	content, err := os.ReadFile(fullPath)
 	if err != nil {
@@ -512,7 +528,6 @@ func LoadReportSummary(careerOpsPath, reportPath string) (archetype, tldr, remot
 		archetype = cleanTableCell(m[1])
 	}
 
-	// Try table-format TL;DR first (most reports), then colon format
 	if m := reTlDr.FindStringSubmatch(text); m != nil {
 		tldr = cleanTableCell(m[1])
 	} else if m := reTlDrColon.FindStringSubmatch(text); m != nil {
@@ -527,12 +542,63 @@ func LoadReportSummary(careerOpsPath, reportPath string) (archetype, tldr, remot
 		comp = cleanTableCell(m[1])
 	}
 
-	// Truncate long fields
 	if len(tldr) > 120 {
 		tldr = tldr[:117] + "..."
 	}
 
 	return
+}
+
+// loadReportJSON reads and parses a JSON sidecar file.
+// Returns nil if the file doesn't exist or is malformed.
+func loadReportJSON(careerOpsPath, jsonPath string) *model.ReportJSON {
+	fullPath := filepath.Join(careerOpsPath, jsonPath)
+	data, err := os.ReadFile(fullPath)
+	if err != nil {
+		return nil
+	}
+	var rj model.ReportJSON
+	if err := json.Unmarshal(data, &rj); err != nil {
+		return nil
+	}
+	return &rj
+}
+
+// EnrichFromJSON populates extended fields on a CareerApplication from its JSON sidecar.
+// Call after ParseApplications for richer data when available.
+func EnrichFromJSON(careerOpsPath string, app *model.CareerApplication) {
+	if app.ReportPath == "" {
+		return
+	}
+	jsonPath := strings.TrimSuffix(app.ReportPath, ".md") + ".json"
+	rj := loadReportJSON(careerOpsPath, jsonPath)
+	if rj == nil {
+		return
+	}
+	app.ReportJSONPath = jsonPath
+	if app.JobURL == "" && rj.URL != "" {
+		app.JobURL = rj.URL
+	}
+	if app.CVVersion == "" {
+		app.CVVersion = rj.CVVersion
+	}
+	if app.FollowupDate == "" {
+		app.FollowupDate = rj.Followup
+	}
+	if app.Archetype == "" {
+		app.Archetype = rj.Archetype
+	}
+	if app.TlDr == "" {
+		app.TlDr = rj.TlDr
+	}
+	if app.Remote == "" {
+		app.Remote = rj.Remote
+	}
+	if app.CompEstimate == "" {
+		app.CompEstimate = rj.Comp
+	}
+	app.Keywords = rj.Keywords
+	app.Gaps = rj.Gaps
 }
 
 // UpdateApplicationStatus updates the status of an application in applications.md.

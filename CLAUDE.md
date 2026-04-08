@@ -49,16 +49,32 @@ AI-powered job search automation built on Claude Code: pipeline tracking, offer 
 
 | File | Function |
 |------|----------|
-| `data/applications.md` | Application tracker |
+| `data/applications.md` | Application tracker (markdown — always maintained) |
+| `data/pipeline.db` | SQLite database — richer queries, atomic writes, preferred for new installs |
 | `data/pipeline.md` | Inbox of pending URLs |
-| `data/scan-history.tsv` | Scanner dedup history |
+| `data/scan-history.tsv` | Scanner dedup history (TSV fallback when DB not available) |
 | `portals.yml` | Query and company config |
 | `templates/cv-template.html` | HTML template for CVs |
 | `generate-pdf.mjs` | Playwright: HTML to PDF |
 | `article-digest.md` | Compact proof points from portfolio (optional) |
 | `interview-prep/story-bank.md` | Accumulated STAR+R stories across evaluations |
 | `interview-prep/{company}-{role}.md` | Company-specific interview intel reports |
-| `reports/` | Evaluation reports (format: `{###}-{company-slug}-{YYYY-MM-DD}.md`) |
+| `reports/{###}-{slug}-{date}.md` | Evaluation reports (markdown) |
+| `reports/{###}-{slug}-{date}.json` | Evaluation reports (JSON sidecar — machine-readable, used by dashboard) |
+
+### Database Setup (v2.0+)
+
+For new installs, initialise the SQLite database after `npm install`:
+```bash
+npm run db:init      # create data/pipeline.db with schema
+npm run db:migrate   # import existing applications.md + scan-history.tsv (safe to re-run)
+```
+
+The system works without the database (falls back to flat files), but the DB enables:
+- Atomic tracker writes (no corruption with parallel batch workers)
+- Follow-up date tracking and overdue alerts
+- CV version history per application
+- Rich story bank queries across evaluations
 
 ### OpenCode Commands
 
@@ -199,22 +215,24 @@ Default modes are in `modes/` (English). Additional language-specific modes are 
 
 ### Skill Modes
 
-| If the user... | Mode |
-|----------------|------|
-| Pastes JD or URL | auto-pipeline (evaluate + report + PDF + tracker) |
-| Asks to evaluate offer | `oferta` |
-| Asks to compare offers | `ofertas` |
-| Wants LinkedIn outreach | `contacto` |
-| Asks for company research | `deep` |
-| Preps for interview at specific company | `interview-prep` |
-| Wants to generate CV/PDF | `pdf` |
-| Evaluates a course/cert | `training` |
-| Evaluates portfolio project | `project` |
-| Asks about application status | `tracker` |
-| Fills out application form | `apply` |
-| Searches for new offers | `scan` |
-| Processes pending URLs | `pipeline` |
-| Batch processes offers | `batch` |
+| If the user… | Mode | Aliases |
+|---|---|---|
+| Pastes JD or URL | `auto-pipeline` (evaluate + report + PDF + tracker) | — |
+| Asks to evaluate offer | `evaluate` | `oferta` |
+| Asks to compare offers | `compare` | `ofertas` |
+| Wants LinkedIn outreach | `outreach` | `contacto` |
+| Asks for company research | `deep` | — |
+| Preps for interview at specific company | `interview-prep` | — |
+| Wants to generate CV/PDF | `pdf` | — |
+| Evaluates a course/cert | `training` | — |
+| Evaluates portfolio project | `project` | — |
+| Asks about application status | `tracker` | — |
+| Fills out application form | `apply` | — |
+| Searches for new offers | `scan` | — |
+| Processes pending URLs | `pipeline` | — |
+| Batch processes offers | `batch` | — |
+
+**Mode aliases**: Spanish command names (`oferta`, `ofertas`, `contacto`) continue to work — they route to the same English mode files. No migration needed for existing users.
 
 ### CV Source of Truth
 
@@ -248,14 +266,16 @@ Default modes are in `modes/` (English). Additional language-specific modes are 
 
 ## Stack and Conventions
 
-- Node.js (mjs modules), Playwright (PDF + scraping), YAML (config), HTML/CSS (template), Markdown (data), Canva MCP (optional visual CV)
-- Scripts in `.mjs`, configuration in YAML
-- Output in `output/` (gitignored), Reports in `reports/`
+- Node.js (mjs modules), Playwright (PDF + scraping), SQLite via better-sqlite3 (data layer), YAML (config), HTML/CSS (template), Markdown (data), Canva MCP (optional visual CV)
+- Scripts in `.mjs` (root) and `scripts/` (new orchestration scripts)
+- Output in `output/` (gitignored), Reports in `reports/` (both `.md` and `.json` sidecars)
 - JDs in `jds/` (referenced as `local:jds/{file}` in pipeline.md)
 - Batch in `batch/` (gitignored except scripts and prompt)
 - Report numbering: sequential 3-digit zero-padded, max existing + 1
 - **RULE: After each batch of evaluations, run `node merge-tracker.mjs`** to merge tracker additions and avoid duplications.
 - **RULE: NEVER create new entries in applications.md if company+role already exists.** Update the existing entry.
+- **RULE: Every evaluation MUST produce both a `.md` report AND a `.json` sidecar** in `reports/`. The dashboard and story bank depend on the JSON.
+- **RULE: Every new STAR+R story MUST be appended** to `interview-prep/story-bank.md` AND inserted into `data/pipeline.db` story_bank table (if DB exists).
 
 ### TSV Format for Tracker Additions
 

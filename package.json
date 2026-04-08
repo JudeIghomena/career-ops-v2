@@ -1,29 +1,38 @@
 {
   "name": "career-ops",
-  "version": "1.0.0",
-  "description": "AI-powered job search pipeline built on Claude Code",
+  "version": "2.0.0",
+  "description": "AI-powered job search pipeline built on Claude Code — re-engineered for efficiency",
   "scripts": {
-    "doctor": "node doctor.mjs",
-    "verify": "node verify-pipeline.mjs",
-    "normalize": "node normalize-statuses.mjs",
-    "dedup": "node dedup-tracker.mjs",
-    "merge": "node merge-tracker.mjs",
-    "pdf": "node generate-pdf.mjs",
-    "sync-check": "node cv-sync-check.mjs",
+    "doctor":       "node doctor.mjs",
+    "verify":       "node verify-pipeline.mjs",
+    "normalize":    "node normalize-statuses.mjs",
+    "dedup":        "node dedup-tracker.mjs",
+    "merge":        "node merge-tracker.mjs",
+    "pdf":          "node generate-pdf.mjs",
+    "sync-check":   "node cv-sync-check.mjs",
     "update:check": "node update-system.mjs check",
-    "update": "node update-system.mjs apply",
-    "rollback": "node update-system.mjs rollback",
-    "liveness": "node check-liveness.mjs"
+    "update":       "node update-system.mjs apply",
+    "rollback":     "node update-system.mjs rollback",
+    "liveness":     "node check-liveness.mjs",
+    "db:init":      "node scripts/db-init.mjs",
+    "db:migrate":   "node scripts/db-migrate.mjs",
+    "batch:run":    "node scripts/batch-orchestrator.mjs",
+    "batch:dry":    "node scripts/batch-orchestrator.mjs --dry-run",
+    "batch:retry":  "node scripts/batch-orchestrator.mjs --retry-failed"
   },
   "keywords": ["ai", "job-search", "claude-code", "career", "automation"],
   "author": "Santiago Fernández de Valderrama <hi@santifer.io> (https://santifer.io)",
+  "contributors": [
+    "Jude Ighomena <jude@example.com>"
+  ],
   "homepage": "https://santifer.io",
   "repository": {
     "type": "git",
-    "url": "https://github.com/santifer/career-ops"
+    "url": "https://github.com/JudeIghomena/career-ops"
   },
   "license": "MIT",
   "dependencies": {
+    "better-sqlite3": "^9.4.3",
     "playwright": "^1.58.1"
   }
 }

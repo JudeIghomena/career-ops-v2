@@ -1,104 +1,147 @@
-# Modo: batch — Procesamiento Masivo de Ofertas
+# Mode: batch — Bulk Offer Processing
 
-Dos modos de uso: **conductor --chrome** (navega portales en tiempo real) o **standalone** (script para URLs ya recolectadas).
+Two operating modes:
+- **Mode A — Conductor + Chrome**: Claude navigates portals live, spawns workers per offer
+- **Mode B — Orchestrator script**: Node.js orchestrator processes pre-collected URLs with full resumability and atomic state
 
-## Arquitectura
+---
+
+## Architecture
 
 ```
-Claude Conductor (claude --chrome --dangerously-skip-permissions)
+Mode A: Claude Conductor (claude --chrome --dangerously-skip-permissions)
   │
-  │  Chrome: navega portales (sesiones logueadas)
-  │  Lee DOM directo — el usuario ve todo en tiempo real
+  │  Chrome: navigates portals (logged-in sessions)
+  │  Reads DOM directly — user sees everything in real time
   │
-  ├─ Oferta 1: lee JD del DOM + URL
-  │    └─► claude -p worker → report .md + PDF + tracker-line
+  ├─ Offer 1: reads JD from DOM + URL
+  │    └─► claude -p worker → report .md + .json + PDF + tracker-line
   │
-  ├─ Oferta 2: click siguiente, lee JD + URL
-  │    └─► claude -p worker → report .md + PDF + tracker-line
+  ├─ Offer 2: click next, reads JD + URL
+  │    └─► claude -p worker → report .md + .json + PDF + tracker-line
   │
-  └─ Fin: merge tracker-additions → applications.md + resumen
+  └─ End: node merge-tracker.mjs → applications.md + summary
+
+Mode B: Node.js Orchestrator (scripts/batch-orchestrator.mjs)
+  │
+  ├─ Reads batch/batch-input.tsv
+  ├─ Tracks state in data/pipeline.db (atomic) or batch/batch-state.tsv (fallback)
+  ├─ Manages N parallel claude workers safely
+  └─ Merges tracker on completion
 ```
 
-Cada worker es un `claude -p` hijo con contexto limpio de 200K tokens. El conductor solo orquesta.
+---
 
-## Archivos
+## Files
 
 ```
 batch/
-  batch-input.tsv               # URLs (por conductor o manual)
-  batch-state.tsv               # Progreso (auto-generado, gitignored)
-  batch-runner.sh               # Script orquestador standalone
-  batch-prompt.md               # Prompt template para workers
-  logs/                         # Un log por oferta (gitignored)
-  tracker-additions/            # Líneas de tracker (gitignored)
+  batch-input.tsv          # URLs to process (manually added or by conductor)
+  batch-state.tsv          # TSV fallback state (auto-generated, gitignored)
+  batch-prompt.md          # System prompt template for workers
+  logs/                    # One log file per offer (gitignored)
+  tracker-additions/       # TSV tracker lines from each worker (gitignored)
+
+scripts/
+  batch-orchestrator.mjs   # Mode B orchestrator (replaces batch-runner.sh)
 ```
 
-## Modo A: Conductor --chrome
+---
 
-1. **Leer estado**: `batch/batch-state.tsv` → saber qué ya se procesó
-2. **Navegar portal**: Chrome → URL de búsqueda
-3. **Extraer URLs**: Leer DOM de resultados → extraer lista de URLs → append a `batch-input.tsv`
-4. **Para cada URL pendiente**:
-   a. Chrome: click en la oferta → leer JD text del DOM
-   b. Guardar JD a `/tmp/batch-jd-{id}.txt`
-   c. Calcular siguiente REPORT_NUM secuencial
-   d. Ejecutar via Bash:
+## Mode A: Conductor + Chrome
+
+1. **Read state**: `data/pipeline.db` (or `batch/batch-state.tsv`) → know what's already processed
+2. **Navigate portal**: Chrome → job search URL
+3. **Extract URLs**: Read DOM results → extract list → append to `batch-input.tsv`
+4. **For each pending URL**:
+   a. Chrome: click offer → read JD text from DOM
+   b. Save JD to `/tmp/batch-jd-{id}.txt`
+   c. Calculate next sequential REPORT_NUM
+   d. Execute worker:
       ```bash
       claude -p --dangerously-skip-permissions \
         --append-system-prompt-file batch/batch-prompt.md \
-        "Procesa esta oferta. URL: {url}. JD: /tmp/batch-jd-{id}.txt. Report: {num}. ID: {id}"
+        "Process this offer. URL: {url}. JD: /tmp/batch-jd-{id}.txt. Report: {num}. ID: {id}"
       ```
-   e. Actualizar `batch-state.tsv` (completed/failed + score + report_num)
-   f. Log a `logs/{report_num}-{id}.log`
-   g. Chrome: volver atrás → siguiente oferta
-5. **Paginación**: Si no hay más ofertas → click "Next" → repetir
-6. **Fin**: Merge `tracker-additions/` → `applications.md` + resumen
+   e. Update state (completed / failed + score + report_num)
+   f. Log to `batch/logs/{num}-{id}.log`
+   g. Chrome: go back → next offer
+5. **Pagination**: click "Next" → repeat
+6. **End**: `node merge-tracker.mjs` → merge + summary
 
-## Modo B: Script standalone
+---
+
+## Mode B: Orchestrator Script
 
 ```bash
-batch/batch-runner.sh [OPTIONS]
+# Basic run (sequential, 1 worker)
+npm run batch:run
+
+# Or call directly
+node scripts/batch-orchestrator.mjs [OPTIONS]
 ```
 
-Opciones:
-- `--dry-run` — lista pendientes sin ejecutar
-- `--retry-failed` — solo reintenta fallidas
-- `--start-from N` — empieza desde ID N
-- `--parallel N` — N workers en paralelo
-- `--max-retries N` — intentos por oferta (default: 2)
+**Options:**
+| Flag | Description |
+|------|-------------|
+| `--dry-run` | List pending jobs without processing |
+| `--retry-failed` | Only retry previously failed jobs |
+| `--start-from N` | Skip jobs with ID < N |
+| `--parallel N` | Number of concurrent workers (default: 1) |
+| `--max-retries N` | Max attempts per job (default: 2) |
+| `--limit N` | Process only N jobs (useful for test runs) |
 
-## Formato batch-state.tsv
+**Why Mode B is safer than the old shell script:**
+- State written to SQLite with WAL mode — atomic, no TSV race conditions with `--parallel`
+- Lock file prevents double execution
+- Single Node.js process manages concurrency — no subprocess fan-out issues
+- `--retry-failed` reads from DB, not a fragile grep on TSV
 
-```
-id	url	status	started_at	completed_at	report_num	score	error	retries
-1	https://...	completed	2026-...	2026-...	002	4.2	-	0
-2	https://...	failed	2026-...	2026-...	-	-	Error msg	1
-3	https://...	pending	-	-	-	-	-	0
-```
+---
 
-## Resumabilidad
+## State Schema (`batch_jobs` table)
 
-- Si muere → re-ejecutar → lee `batch-state.tsv` → skip completadas
-- Lock file (`batch-runner.pid`) previene ejecución doble
-- Cada worker es independiente: fallo en oferta #47 no afecta a las demás
+| Column | Type | Description |
+|--------|------|-------------|
+| `id` | INTEGER | Auto PK |
+| `batch_id` | TEXT | ISO timestamp of the run |
+| `url` | TEXT | Job posting URL |
+| `status` | TEXT | pending \| processing \| completed \| failed |
+| `started_at` | TEXT | ISO timestamp |
+| `completed_at` | TEXT | ISO timestamp |
+| `report_num` | TEXT | e.g. "007" |
+| `score` | REAL | Numeric score 1.0–5.0 |
+| `error_msg` | TEXT | Error if failed |
+| `retries` | INTEGER | Attempt count |
 
-## Workers (claude -p)
+---
 
-Cada worker recibe `batch-prompt.md` como system prompt. Es self-contained.
+## Worker Output (per offer)
 
-El worker produce:
-1. Report `.md` en `reports/`
-2. PDF en `output/`
-3. Línea de tracker en `batch/tracker-additions/{id}.tsv`
-4. JSON de resultado por stdout
+Each worker produces:
+1. `reports/{num}-{slug}-{date}.md` — full evaluation report
+2. `reports/{num}-{slug}-{date}.json` — machine-readable summary
+3. `output/{num}-{slug}.pdf` — ATS-optimised CV (if score ≥ threshold)
+4. `batch/tracker-additions/{num}-{slug}.tsv` — tracker line for merge
 
-## Gestión de errores
+---
+
+## Error Handling
 
 | Error | Recovery |
 |-------|----------|
-| URL inaccesible | Worker falla → conductor marca `failed`, siguiente |
-| JD detrás de login | Conductor intenta leer DOM. Si falla → `failed` |
-| Portal cambia layout | Conductor razona sobre HTML, se adapta |
-| Worker crashea | Conductor marca `failed`, siguiente. Retry con `--retry-failed` |
-| Conductor muere | Re-ejecutar → lee state → skip completadas |
-| PDF falla | Report .md se guarda. PDF queda pendiente |
+| URL not accessible | Worker fails → orchestrator marks `failed`, continues |
+| JD behind login (Mode A) | Conductor tries DOM. If fails → `failed` |
+| Portal layout change (Mode A) | Conductor reasons about HTML, adapts |
+| Worker crashes | Orchestrator marks `failed`, continues. Retry with `--retry-failed` |
+| Orchestrator dies | Re-run → reads state → skips completed |
+| PDF fails | `.md` and `.json` saved. PDF left pending |
+| DB not available | Falls back to `batch-state.tsv` automatically |
+
+---
+
+## Resumability
+
+- Re-run at any time — already-completed jobs are skipped automatically
+- `batch-runner.pid` lock file prevents accidental parallel runs
+- Individual worker failures never cascade to other jobs

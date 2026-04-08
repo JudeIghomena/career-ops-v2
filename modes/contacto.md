@@ -1,26 +1,38 @@
-# Modo: contacto — LinkedIn Power Move
+# Mode: outreach — LinkedIn Power Move
 
-1. **Identificar targets** via WebSearch:
-   - Hiring manager del equipo
-   - Recruiter asignado
-   - 2-3 peers del equipo (gente con rol similar)
+> **Note:** The Spanish alias `contacto` maps to this mode. Both `/career-ops outreach` and `/career-ops contacto` invoke this file.
 
-2. **Seleccionar target primario**: la persona que más se beneficiaría de que el candidato estuviera allí
+Research the right contacts at a company and draft a high-signal LinkedIn outreach message.
 
-3. **Generar mensaje** con framework de 3 frases:
-   - **Frase 1 (Gancho)**: Algo específico sobre su empresa o reto actual con IA (NO genérico)
-   - **Frase 2 (Prueba)**: Mayor logro cuantificable del candidato relevante para ESE rol (ej: "I built an AI agent handling 90% of customer service at my company before selling it")
-   - **Frase 3 (Propuesta)**: Charla rápida, sin presión ("Would love to chat about [tema específico] for 15 min")
+---
 
-4. **Versiones**:
-   - EN (default)
-   - ES (si empresa española)
+## Step 1 — Identify Targets
 
-5. **Targets alternativos** con justificación de por qué son buenos second choices
+Use WebSearch to find:
+- Hiring manager of the relevant team
+- Assigned recruiter (if known)
+- 2–3 peers with a similar role (for warm intro intel)
 
-**Reglas del mensaje:**
-- Máximo 300 caracteres (LinkedIn connection request limit)
-- NO corporate-speak
-- NO "I'm passionate about..."
-- Algo que haga que quieran responder
-- NUNCA compartir teléfono
+## Step 2 — Select Primary Target
+
+Choose the person who would benefit most from having this candidate join. Rationale: message the decision-maker, not the gatekeeper.
+
+## Step 3 — Draft the Message
+
+**3-sentence framework:**
+1. **Hook**: Something specific about their company or current AI challenge — NOT generic. Reference a product launch, blog post, or known initiative.
+2. **Proof**: Candidate's single most relevant, quantified achievement for THIS role. E.g. "Built an AI agent handling 90% of customer support before selling the company."
+3. **Ask**: Low-friction ask — "Would love a 15-min chat about [specific topic]."
+
+**Constraints:**
+- ≤ 300 characters (LinkedIn connection request limit)
+- No corporate speak — no "I'm passionate about…" / "I'd love the opportunity to…"
+- Something concrete enough to make them want to respond
+- NEVER include a phone number
+
+## Step 4 — Produce Outputs
+
+- **Primary message**: ready to paste into LinkedIn
+- **Language variants**: EN (default) + local language if company is non-English
+- **Alternative targets**: 2 backup contacts with rationale for why they're good second choices
+- **Follow-up timing**: recommend when to follow up if no response (typically 5–7 business days)

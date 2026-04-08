@@ -13,11 +13,10 @@ candidate:
   twitter: "https://x.com/janesmith"
   # (Optional) Canva resume design ID for visual CV generation via /career-ops pdf.
   # Find it in your Canva design URL: https://www.canva.com/design/DAxxxxxxx/...
-  # The ID starts with "D" and is 11 characters long.
   # canva_resume_design_id: "DAxxxxxxxxx"
 
 target_roles:
-  # Your North Star roles — what you're optimizing for
+  # Your North Star roles — what you're optimising for
   primary:
     - "Senior AI Engineer"
     - "Staff ML Engineer"
@@ -38,7 +37,7 @@ narrative:
   headline: "ML Engineer turned AI product builder"
   # Your exit story — what makes you unique
   exit_story: "Built and sold my SaaS after 5 years. Now focused on applied AI at scale."
-  # Your top 3-5 superpowers
+  # Your top 3–5 superpowers
   superpowers:
     - "End-to-end ML pipelines"
     - "Fast prototyping (idea to prod in 2 weeks)"
@@ -51,15 +50,11 @@ narrative:
     - name: "Open Source Tool"
       url: "https://github.com/janesmith/tool"
       hero_metric: "2K+ GitHub stars"
-  # Optional: dashboard/demo URL with credentials
-  # dashboard:
-  #   url: "https://janesmith.dev/demo"
-  #   password: "demo-2026"
 
 compensation:
-  target_range: "$150K-200K"     # Your target total comp
+  target_range: "$150K–200K"    # Your target total comp
   currency: "USD"
-  minimum: "$120K"               # Walk-away number
+  minimum: "$120K"              # Walk-away number
   location_flexibility: "Remote preferred, 1 week/month on-site possible"
 
 location:
@@ -69,3 +64,30 @@ location:
   visa_status: "No sponsorship needed"
   # For remote roles outside your country:
   # onsite_availability: "1 week/month in any city"
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Scoring configuration (NEW in v2.0)
+# Controls how the evaluate and compare modes score offers.
+# All weights must sum to 100.
+# ──────────────────────────────────────────────────────────────────────────────
+scoring:
+  # Score thresholds
+  apply_threshold: 4.5    # Score >= this → recommend applying immediately
+  skip_threshold:  3.5    # Score < this  → recommend against applying
+
+  # Dimension weights (must sum to 100)
+  weights:
+    north_star:          25   # How well role fits your target archetypes
+    cv_match:            20   # Skills, experience, proof point alignment
+    compensation:        15   # Salary vs. market benchmark
+    cultural_signals:    15   # Culture, growth, stability, remote policy
+    red_flags:           15   # Blockers and negative signals
+    growth_trajectory:   10   # Path to next level
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Language / localisation
+# ──────────────────────────────────────────────────────────────────────────────
+language:
+  # Set to modes/de for German (DACH), modes/fr for French, modes/pt for Portuguese
+  # modes_dir: "modes"
+  default: "en"
