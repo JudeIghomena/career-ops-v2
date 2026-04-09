@@ -159,3 +159,7 @@ MIT
 
 **Career Wizard** · Janna AI Research Labs · an iRaven Group company
 GitHub: [github.com/JudeIghomena](https://github.com/JudeIghomena)
+
+---
+
+© 2026 iRaven Group. All rights reserved. Career Wizard and Janna AI Research Labs are products of iRaven Group. Unauthorised reproduction or distribution of this software or its documentation is prohibited.
