@@ -1,6 +1,6 @@
-# Contributing to Career-Ops
+# Contributing to Career Wizard
 
-Thanks for your interest in contributing! Career-Ops is built with Claude Code, and you can use it for development too.
+Thanks for your interest in contributing to Career Wizard — a Janna AI Research Labs product by iRaven Group.
 
 ## Before Submitting a PR
 
@@ -20,7 +20,7 @@ PRs without a corresponding issue may be closed if they don't align with the pro
 2. Fork the repo
 3. Create a branch (`git checkout -b feature/my-feature`)
 4. Make your changes
-5. Test with a fresh clone (see [docs/SETUP.md](docs/SETUP.md))
+5. Test with a fresh clone
 6. Commit and push
 7. Open a Pull Request referencing the issue
 
@@ -28,28 +28,25 @@ PRs without a corresponding issue may be closed if they don't align with the pro
 
 **Good first contributions:**
 - Add companies to `templates/portals.example.yml`
-- Translate modes to other languages
 - Improve documentation
 - Add example CVs for different roles (in `examples/`)
-- Report bugs via [Issues](https://github.com/santifer/career-ops/issues)
+- Report bugs via [Issues](https://github.com/JudeIghomena/career-ops/issues)
 
 **Bigger contributions:**
 - New evaluation dimensions or scoring logic
-- Dashboard TUI features (in `dashboard/`)
 - New skill modes (in `modes/`)
 - Script improvements (`.mjs` utilities)
 
 ## Guidelines
 
-- Keep modes language-agnostic when possible (Claude handles both EN and ES)
+- Keep modes language-agnostic when possible (Claude handles translation)
 - Scripts should handle missing files gracefully (check `existsSync` before `readFileSync`)
-- Dashboard changes require `go build` — test with real data before submitting
-- Don't commit personal data (cv.md, profile.yml, applications.md, reports/)
+- Don't commit personal data (cv.md, profile.yml, reports/)
 
-## What we do NOT accept
+## What We Do NOT Accept
 
 - **PRs that scrape platforms prohibiting automated access** (LinkedIn, etc.). We actively reject these to respect third-party ToS.
-- **PRs that enable auto-submitting applications** without human review. career-ops is a decision-support tool, not a spam bot.
+- **PRs that enable auto-submitting applications** without human review. Career Wizard is a decision-support tool, not a spam bot.
 - **PRs that add external API dependencies** without prior discussion in an issue.
 - **PRs containing personal data** (real CVs, emails, phone numbers). Use `examples/` with fictional data instead.
 
@@ -58,16 +55,13 @@ PRs without a corresponding issue may be closed if they don't align with the pro
 ```bash
 # Scripts
 npm run doctor                # Setup validation
-node verify-pipeline.mjs     # Health check
-node cv-sync-check.mjs        # Config check
-
-# Dashboard
-cd dashboard && go build -o career-dashboard .
-./career-dashboard --path ..
+node verify-pipeline.mjs      # Health check
 ```
 
 ## Need Help?
 
-- [Open an issue](https://github.com/santifer/career-ops/issues)
-- [Read the architecture docs](docs/ARCHITECTURE.md)
-- Built by [santifer](https://santifer.io)
+- [Open an issue](https://github.com/JudeIghomena/career-ops/issues)
+
+---
+
+© 2026 iRaven Group. All rights reserved.
